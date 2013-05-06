@@ -1,0 +1,9 @@
+Scrapy==0.16.4
+Twisted==13.0.0
+argparse==1.2.1
+distribute==0.6.24
+ipython==0.13.2
+lxml==3.2.0
+w3lib==1.2
+wsgiref==0.1.2
+zope.interface==4.0.5

@@ -1,0 +1,4 @@
+* tests
+* disable redirect middleware
+* store catalogue item url
+* better docs
