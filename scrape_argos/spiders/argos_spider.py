@@ -36,4 +36,5 @@ class ArgosSpider(BaseSpider):
         l.add_xpath('price', self.price_path)
         l.add_xpath('image_src', self.image_src_path)
         l.add_xpath('details', self.details_path)
+        l.add_value('url', request.url)
         return l.load_item()
