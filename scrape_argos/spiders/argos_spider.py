@@ -27,7 +27,12 @@ class ArgosSpider(BaseSpider):
         xxs = XmlXPathSelector(response)
         xxs.register_namespace('n', self.namespace)
         links = xxs.select(self.item_url_path).extract()
-        return [Request(x, callback=self.parse_item) for x in links]
+        for link in links:
+            yield Request(
+                     link,
+                     meta={'dont_redirect': True},
+                     callback=self.parse_item
+            )
 
     def parse_item(self, response):
 	l = XPathItemLoader(item=CatalogueItem(), response=response)
@@ -36,5 +41,5 @@ class ArgosSpider(BaseSpider):
         l.add_xpath('price', self.price_path)
         l.add_xpath('image_src', self.image_src_path)
         l.add_xpath('details', self.details_path)
-        l.add_value('url', request.url)
+        l.add_value('url', response.url)
         return l.load_item()
