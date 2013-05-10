@@ -1,9 +1,10 @@
 from scrapy.contrib.loader import XPathItemLoader
 from scrapy.http import Request
-from scrapy.selector import HtmlXPathSelector, XmlXPathSelector
+from scrapy.selector import XmlXPathSelector
 from scrapy.spider import BaseSpider
 
-from scrape_argos.items import CatalogueItem 
+from scrape_argos.items import CatalogueItem
+
 
 class ArgosSpider(BaseSpider):
     name = "argos"
@@ -29,14 +30,17 @@ class ArgosSpider(BaseSpider):
         links = xxs.select(self.item_url_path).extract()
         for link in links:
             yield Request(
-                     link,
-                     meta={'dont_redirect': True},
-                     callback=self.parse_item
+                link,
+                meta={'dont_redirect': True},
+                callback=self.parse_item
             )
 
     def parse_item(self, response):
-	l = XPathItemLoader(item=CatalogueItem(), response=response)
-        l.add_xpath('name', self.name_path) 
+        l = XPathItemLoader(
+            item=CatalogueItem(),
+            response=response
+        )
+        l.add_xpath('name', self.name_path)
         l.add_xpath('catalogue_number', self.catalogue_number_path)
         l.add_xpath('price', self.price_path)
         l.add_xpath('image_src', self.image_src_path)
