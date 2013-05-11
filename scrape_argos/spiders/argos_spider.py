@@ -1,12 +1,16 @@
 from scrapy.contrib.loader import XPathItemLoader
+from scrapy.contrib.spiders import XMLFeedSpider
 from scrapy.http import Request
-from scrapy.selector import XmlXPathSelector
-from scrapy.spider import BaseSpider
 
 from scrape_argos.items import CatalogueItem
 
 
-class ArgosSpider(BaseSpider):
+class ArgosSpider(XMLFeedSpider):
+    """
+    A spider that crawls the argos.ie products sitemap and returns
+    CatalogueItems in a format that's easily indexed.
+    """
+
     name = "argos"
     allowed_domains = ["argos.ie"]
     start_urls = [
@@ -14,28 +18,35 @@ class ArgosSpider(BaseSpider):
     ]
 
     # sitemap
-    namespace = "http://www.sitemaps.org/schemas/sitemap/0.9"
-    item_url_path = "//n:loc/text()"
+    namespaces = [('n', 'http://www.sitemaps.org/schemas/sitemap/0.9')]
+    itertag = 'n:loc'
 
-    # catalogue item
+    # catalogue item xpaths
     name_path = ".//*[@id='primaryproductinfo']/h1/text()"
     catalogue_number_path = ".//*[@id='primaryproductinfo']/span/text()"
     price_path = ".//*[@id='pdpForm']/div[2]/ul/li[2]/span/text()[1]"
     image_src_path = ".//*[@id='mainimage']/@src"
     details_path = ".//*[@id='producttabs']/div[1]"
 
-    def parse(self, response):
-        xxs = XmlXPathSelector(response)
-        xxs.register_namespace('n', self.namespace)
-        links = xxs.select(self.item_url_path).extract()
-        for link in links:
-            yield Request(
-                link,
-                meta={'dont_redirect': True},
-                callback=self.parse_item
-            )
+    def make_requests_from_url(self, url):
+        """
+        Overrides the BaseSpider class in order to set the dont_redirect
+        Request meta.
+        The argos products sitemap contains a lot of links that return 302
+        and redirect to a search page. Not following these reduces the crawl
+        overhead.
+        """
+        return Request(
+            url,
+            meta={'dont_redirect': True},
+            dont_filter=True
+        )
 
-    def parse_item(self, response):
+    def parse_node(self, response, selector):
+        """
+        Implements the XMLFeedSpider parse_node.
+        Parses argos.ie catalogue pages and scrapes Items.
+        """
         l = XPathItemLoader(
             item=CatalogueItem(),
             response=response
